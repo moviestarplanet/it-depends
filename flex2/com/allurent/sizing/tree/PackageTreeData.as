@@ -87,7 +87,7 @@ package com.allurent.sizing.tree
             }
 
             // add a special <classes> node if necessary
-            if (classChildrenNode != null)
+            if (classChildrenNode != null && classChildren.length > 0)
             {
                 children.addItem(classChildrenNode);
                 classChildren.sort = typeSizeSort;
@@ -137,7 +137,7 @@ package com.allurent.sizing.tree
                 if (nonEmptyFilter(model)
                     && (filter == null || filter(model)))
                 {
-                    children.addItem(new ModelNode(model, ModelNode.CLASS_TYPE));
+                    children.addItem(new ModelNode(model, ModelNode.CLASS_LIST_TYPE));
                 }
             }
             

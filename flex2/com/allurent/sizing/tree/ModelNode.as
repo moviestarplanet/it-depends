@@ -50,6 +50,7 @@ package com.allurent.sizing.tree
         public static const PACKAGE_TYPE:int = 1;
         public static const PACKAGE_CLASSES_TYPE:int = 2;
         public static const CLASS_TYPE:int = 3;
+        public static const CLASS_LIST_TYPE:int = 4;
         
         public function ModelNode(model:FileSegmentModel, type:int, children:ArrayCollection = null)
         {
@@ -80,6 +81,7 @@ package com.allurent.sizing.tree
             {
                 case PACKAGE_TYPE:
                 case CLASS_TYPE:
+                case CLASS_LIST_TYPE:
                     return data.size;
                     
                 case PACKAGE_CLASSES_TYPE:
@@ -97,8 +99,22 @@ package com.allurent.sizing.tree
         
         public function updateLabel():void
         {
-            this.label = (type == PACKAGE_CLASSES_TYPE ? "<classes>" : data.unqualifiedName)
-                         + segmentSuffix();
+            var text:String;
+            switch (type)
+            {
+                case PACKAGE_CLASSES_TYPE:
+                    text = "<classes>";
+                    break;
+                    
+                case CLASS_LIST_TYPE:
+                    text = ClassModel(data).className;
+                    break;
+                    
+                default:
+                    text = data.unqualifiedName;
+                    break;
+            }
+            this.label = text + segmentSuffix();
         }
 
         private function segmentSuffix():String
