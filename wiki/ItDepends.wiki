@@ -1,4 +1,4 @@
-#summary *ItDepends* is a tool for visually browsing class and package dependencies in Flex applications, and for exploring loadable-module scenarios.
+#summary a tool for visually browsing class and package dependencies in Flex applications, and for exploring loadable-module scenarios.
 
 = Introduction =
 
