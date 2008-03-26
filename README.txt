@@ -1,30 +1,25 @@
 SizeAnalyzer
 
-This Apollo application analyzes the link report output from the MXML compiler to support
-examination of the code sizes of packages and classes, and to browse the references
-from one class to another.
 
-The "All Classes" window allows browsing of code size summarized by package.  The absolute
-code sizes as reported in bytes do not match the actual sizes in the SWF, either compressed
-or uncompressed, but the proportional impact of various classes and packages is accurate
-and can be extrapolated to the real SWF.
+LICENSE:
 
-When a class or package is selected on the left, the right hand panel shows three
-alternative displays:
+Copyright (c) 2008 Allurent, Inc.
 
-	All References		all classes ultimately referred to by any dependency chain
-						originating within the selected object, organized by package.
-						
-	Immediate References	all classes directly referred to by the selected object
-	Referring Classes	all classes that directly refer to the selected object
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and/or sell copies of the
+Software, and to permit persons to whom the Software is furnished
+to do so, subject to the following conditions:
 
-ALT-clicking any class in any window brings up a window that can browse the source for that
-class with embedded dependency information.
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
 
-Classes (not packages) may be dragged and dropped from the "All Classes" window into
-another module window, e.g, "Main Module".  This in effect creates a subset of the
-main application that can be separately analyzed.  Clicking the "Satisfy References"
-button will pull in all classes from the original application that are referred to
-by any class in the module.
-
-There is presently no way to create a new module window but that would be easy to add. 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
