@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Window xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical"
+    width="800" height="600"
+    preinitialize="onInitialize()"
+    creationComplete="onCreationComplete()">
+    
+    <mx:Script>
+        <![CDATA[
+            import com.allurent.sizing.model.ProjectModel;
+            import com.allurent.sizing.model.FileSegmentModel;
+            import mx.formatters.NumberFormatter;
+            import mx.managers.DragManager;
+            import mx.controls.List;
+            import mx.core.Application;
+            import mx.managers.PopUpManager;
+            import mx.controls.HTML;
+            import flash.filesystem.FileMode;
+            import flash.filesystem.FileStream;
+            import flash.filesystem.File;
+            
+            import mx.core.IUIComponent;
+            import mx.events.DragEvent;
+            import com.allurent.sizing.model.CodeModel;
+            import com.allurent.sizing.model.ClassModel;
+            import com.allurent.sizing.model.PackageModel;
+            import com.allurent.sizing.tree.PackageTreeData;
+            import com.allurent.sizing.Controller;
+
+            private var _codeModel:CodeModel;
+            private var percentFormatter:NumberFormatter;
+            private var sizeFormatter:NumberFormatter;
+
+            [Bindable]
+            public var controller:Controller;
+            
+            private function onInitialize():void
+            {
+                percentFormatter = new NumberFormatter();
+                percentFormatter.precision = 2;
+                sizeFormatter = new NumberFormatter();
+                sizeFormatter.useThousandsSeparator = true;
+            }
+            
+            private function onCreationComplete():void
+            {
+                if (_codeModel != null)
+                {
+                    updatePackageTree();
+                }
+            }
+
+            [Bindable]
+            public function get codeModel():CodeModel
+            {
+                return _codeModel;
+            }
+            
+            public function set codeModel(model:CodeModel):void
+            {
+                _codeModel = model;
+                if (packageTree != null)
+                {
+                    updatePackageTree();
+                }
+            }
+            
+            private function removeSelection(list:List):void
+            {
+                var item:Object = list.selectedItem;
+                if (item == null)
+                {
+                    return;
+                }
+                else if (item.data is PackageModel)
+                {
+                    var p:PackageModel = item.data as PackageModel;
+                    p.codeModel.removePackage(p);
+                    cleanUpCodeModel(p.codeModel);
+                }
+                else if (item.data is ClassModel)
+                {
+                    var c:ClassModel = item.data as ClassModel;
+                    c.codeModel.removeClass(c);
+                    cleanUpCodeModel(c.codeModel);
+                }
+            }
+            
+            private function cleanUpCodeModel(codeModel:CodeModel):void
+            {
+                if (controller.project.mainClassName != null)
+                {
+                    codeModel.gcFromRootClass(controller.project.mainClassName);
+                    codeModel.refresh();
+                }
+            }
+            
+            private function setMainClass(list:List):void
+            {
+                if (list.selectedItem == null)
+                {
+                    return;
+                }
+                
+                var c:ClassModel = list.selectedItem.data as ClassModel;
+                if (c != null)
+                {
+                    controller.project.mainClassName = c.className;
+                }
+            }
+            
+            private function updatePackageTree():void
+            {
+                var packageTreeData:PackageTreeData = new PackageTreeData();
+                packageTree.dataProvider = packageTreeData.getPackageMapTree(codeModel.rootPackage);
+            }
+
+            private function updateReferences():void
+            {
+                var item:Object = packageTree.selectedItem;
+                if (item == null)
+                {
+                    return;
+                }
+
+                if (item.data is FileSegmentModel)
+                {
+                    var packageTreeData:PackageTreeData = new PackageTreeData();
+                    var referenceModel:CodeModel = new CodeModel(controller.project);
+                    referenceModel.addClasses(item.data.referenceClosure);
+                    referenceModel.totalCodeSize = codeModel.totalCodeSize;
+                    referenceTree.dataProvider = packageTreeData.getPackageMapTree(referenceModel.rootPackage);
+
+                    if (item.data is PackageModel)
+                    {
+                        var p:PackageModel = item.data as PackageModel;
+                        var packageExclusion:Function = function(c:ClassModel):Boolean {
+                            var p2:PackageModel = referenceModel.getPackageModel(p.packageName);
+                            return !c.inPackage(p2);
+                        };
+                        
+                        immediateReferenceList.dataProvider = packageTreeData.getClassList(p.references, packageExclusion);
+                        referrerList.dataProvider = packageTreeData.getClassList(p.referrers, packageExclusion);
+                    }
+                    else if (item.data is ClassModel)
+                    {
+                        var c:ClassModel = item.data as ClassModel;
+                        immediateReferenceList.dataProvider = packageTreeData.getClassList(c.references);
+                        referrerList.dataProvider = packageTreeData.getClassList(c.referrers);
+                    }
+                }
+            }
+
+            private function handleDragEnter(event:DragEvent):void
+            {
+                mx.managers.DragManager.acceptDragDrop(IUIComponent(event.target)); 
+            }
+
+            private function handleDragDrop(e:DragEvent):void
+            {
+                var sourceList:List = List(e.dragInitiator);
+                var item:Object = sourceList.selectedItem.data;
+                if (item is ClassModel)
+                {
+                    codeModel.addClass(item as ClassModel);
+                }
+                else if (item is PackageModel)
+                {
+                    codeModel.addPackage(item as PackageModel);
+                }
+                removeSelection(sourceList);
+                if (codeModel.parentModule != null)
+                {
+                    satisfyExternals();
+                }
+                else
+                {
+                    updatePackageTree();
+                }
+            }
+            
+            private function showSource(c:ClassModel):void
+            {
+                if (c != null)
+                {
+                    SourceView.show(c);
+                }
+            }
+            
+            private function satisfyExternals():void
+            {
+                codeModel.closeUnderReferences();
+                updatePackageTree();
+            }
+            
+            private function createModuleView():void
+            {
+                var newModuleView:ModuleView = new ModuleView();
+                newModuleView.codeModel = new CodeModel(controller.project);
+                if (codeModel.isModule)
+                {
+                    newModuleView.codeModel.parentModule = codeModel;
+                    newModuleView.title = title + ":" + moduleName.text;
+                }
+                else
+                {
+                    newModuleView.title = title + ":" + "<Base>";
+                }
+                newModuleView.controller = controller;
+                newModuleView.open();
+            }
+            
+            private function addSourcePath():void
+            {
+                var file:File = new File();
+                file.addEventListener(Event.SELECT, sourcePathSelected);
+                file.browseForDirectory("Add Source Path");
+            }
+            
+            private function sourcePathSelected(e:Event):void
+            {
+                controller.project.sourcePath.push(e.target as File);
+            }
+
+            private function saveProject():void
+            {
+                var file:File = new File();
+                file.addEventListener(Event.SELECT, saveProjectSelected);
+                file.browseForSave("Save Linkage Project");
+            }
+            
+            private function saveProjectSelected(e:Event):void
+            {
+                var file:File = e.target as File;
+                var out:FileStream = new FileStream();
+                out.open(file, FileMode.WRITE);
+                out.writeUTFBytes(controller.project.toXML().toXMLString());
+                out.close();
+            }
+
+            private function getCodeSizeLabel(size:Number):String
+            {
+                var s:String = sizeFormatter.format(size);
+                s += " (";
+                var totalSize:Number = codeModel.project.codeModel.totalCodeSize;
+                s += percentFormatter.format(size * 100 / totalSize);
+                s += "% of ";
+                s += sizeFormatter.format(totalSize);
+                s += ")";
+                return s;
+            }
+        ]]>
+    </mx:Script>
+
+
+    <mx:VBox id="box" width="100%" height="100%">
+        <mx:HBox width="100%">
+            <mx:VBox  width="50%">
+                <mx:Label styleName="callout" text="Code Size: {getCodeSizeLabel(codeModel.totalCodeSize)}"/>
+                <mx:Label styleName="callout" text="References: {codeModel.totalClasses - codeModel.linkedClasses}"/>
+                <mx:Label styleName="callout" text="Linked Classes: {codeModel.linkedClasses} ({controller.project.codeModel.linkedClasses})"/>
+                <mx:Label styleName="callout" text="Main Class: {controller.project.mainClassName}"/>
+            </mx:VBox>
+            <mx:Label text="Module Name: "/>
+            <mx:TextInput id="moduleName" text=""/>
+            <mx:Button id="createModuleButton" enabled="{controller.project.mainClassName != null}"
+                       label="Create Child Module" click="createModuleView()"/>
+            
+        </mx:HBox>
+
+        <mx:HBox width="100%">
+            <mx:Button label="Set Main Class" click="setMainClass(packageTree)"/>
+            <mx:Button id="deletePackageButton" enabled="{controller.project.mainClassName != null}"
+                       label="Delete" click="removeSelection(packageTree)"/>
+            <mx:Button label="Resolve All" enabled="{controller.project.mainClassName != null}" click="satisfyExternals()"/>
+            <mx:Button label="Source Path..." click="addSourcePath()"/>
+            <mx:Button label="Save Project..." click="saveProject()"/>
+        </mx:HBox>
+        
+        <mx:HBox width="100%" height="100%"
+            dragEnter="handleDragEnter(event)"
+            dragDrop="handleDragDrop(event)">
+            
+            <mx:Tree id="packageTree" height="100%" width="50%"
+                dragEnabled="true" dropEnabled="false" dragMoveEnabled="false"
+                change="updateReferences()"
+                doubleClickEnabled="true"
+                doubleClick="showSource(packageTree.selectedItem.data as ClassModel)"/>
+            <mx:TabNavigator height="100%" width="50%" creationPolicy="all">
+                <mx:Canvas label="All References" height="100%" width="100%">
+                    <mx:Tree id="referenceTree" height="100%" width="100%"
+                        doubleClickEnabled="true"
+                        doubleClick="showSource(referenceTree.selectedItem.data as ClassModel)"/>
+                </mx:Canvas>
+                <mx:Canvas label="Immediate References" height="100%" width="100%">
+                    <mx:List id="immediateReferenceList" height="100%" width="100%"
+                        doubleClickEnabled="true"
+                        doubleClick="showSource(immediateReferenceList.selectedItem.data as ClassModel)"/>
+                </mx:Canvas>
+                <mx:Canvas label="Referring Classes" height="100%" width="100%">
+                    <mx:List id="referrerList" height="100%" width="100%"
+                        doubleClickEnabled="true"
+                        doubleClick="showSource(referrerList.selectedItem.data as ClassModel)"/>
+                </mx:Canvas>
+            </mx:TabNavigator>
+        </mx:HBox>
+    </mx:VBox>
+</mx:Window>

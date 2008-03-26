@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical"
+    width="200" height="200"
+    xmlns:view="com.allurent.sizing.view.*">
+    
+    <mx:Style>
+        Panel {
+            border-alpha: 1;
+        }
+        
+        .callout {
+            font-weight: bold;
+        }
+    </mx:Style>
+    <mx:Script>
+        <![CDATA[
+            import mx.events.FileEvent;
+            import com.allurent.sizing.model.CodeModel;
+            import com.allurent.sizing.view.ModuleView;
+            import mx.managers.PopUpManager;
+            import com.allurent.sizing.view.SourceView;
+            import flash.filesystem.File;
+            import com.allurent.sizing.Controller;
+            
+            private function loadProject():void
+            {
+                var file:File = new File();
+                file.addEventListener(Event.SELECT, projectSelected);
+                file.browseForOpen("Open Linkage Explorer Project");
+            }
+            
+            private function projectSelected(e:Event):void
+            {
+                var controller:Controller = new Controller();
+                var file:File = e.target as File;
+                controller.loadProject(file);
+                launchMainModuleView(controller, file.name);
+            }
+            
+            private function loadLinkReport():void
+            {
+                var file:File = new File();
+                file.addEventListener(Event.SELECT, linkReportSelected);
+                file.browseForOpen("Open MXMLC Link Report");
+            }
+            
+            private function linkReportSelected(e:Event):void
+            {
+                var controller:Controller = new Controller();
+                var file:File = e.target as File;
+                controller.loadLinkReport(file);
+                launchMainModuleView(controller, file.name);
+            }
+            
+            private function launchMainModuleView(controller:Controller, title:String):void
+            {
+                var allClassesView:ModuleView = new ModuleView();
+                allClassesView.codeModel = controller.project.codeModel.copyCodeModel();
+                allClassesView.controller = controller;
+                allClassesView.title = title;
+                allClassesView.open();
+            }
+        ]]>
+    </mx:Script>
+    
+    <mx:Button label="Load Link Report..." click="loadLinkReport()"/>
+    <mx:Button label="Load Project..." click="loadProject()"/>
+
+</mx:WindowedApplication>
