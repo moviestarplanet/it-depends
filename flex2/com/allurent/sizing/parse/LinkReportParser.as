@@ -24,6 +24,9 @@ package com.allurent.sizing.parse
 {
     import com.allurent.sizing.model.CodeModel;
     
+    /**
+     * Parse a link report from MXMLC, filling up a CodeModel with the information. 
+     */
     public class LinkReportParser extends Parser
     {
         private const MX_INTERNAL:String = "mx.core.mx_internal";
@@ -33,13 +36,22 @@ package com.allurent.sizing.parse
             super(codeModel);
         }
         
+        /**
+         * Parse the XML for a link report. 
+         */
         override public function parseXML(xml:XML):void
         {
             for each (var script:XML in xml..script)
             {
+                // Add the basic information for a class.  Note that the call to
+                // addClassSize() will implicitly add ClassModels and PackageModels
+                // as needed to maintain the completeness and consistency of the linkage model.
+                //
                 var className:String = fixClassName(script.def.@id);
                 codeModel.addClassSize(className, script.@size);
 
+                // parse prerequisites and dependencies as needed.  Ignore
+                // MX internal stuff in both cases.
                 for each (var prerequisite:XML in script.pre)
                 {
                     var prereqName:String = fixClassName(prerequisite.@id);
@@ -57,16 +69,6 @@ package com.allurent.sizing.parse
                     }
                 }
             }
-        }
-        
-        private static function fixClassName(className:String):String
-        {
-            className = className.replace(/:/g, ".");
-            if (className.match(/^_.+WatcherSetupUtil$/))
-            {
-                className = className.substring(1).replace(/_/g, ".");
-            }
-            return className;
         }
     }
 }

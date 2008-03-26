@@ -24,6 +24,12 @@ package com.allurent.sizing.model
 {
     import flash.filesystem.File;
     
+    /**
+     * Model representing an ItDepends project, which is a set of one or more link reports, SWFX
+     * documents with offsets, source path entries, catalog names and a main class name. 
+     * @author joeb
+     * 
+     */
     [Bindable]
     public class ProjectModel
     {
@@ -36,7 +42,9 @@ package com.allurent.sizing.model
         
         public var mainClassName:String = null;
         
-        
+        /**
+         * Parse some XML into this project model.
+         */        
         public function fromXML(xml:XML):void
         {
             for each (var swfx:XML in xml.swfContents.swfx)
@@ -61,6 +69,9 @@ package com.allurent.sizing.model
             }
         }
         
+        /**
+         * Convert this project model into XML to be saved as a project definition. 
+         */
         public function toXML():XML
         {
             var project:XML = <project/>;
@@ -95,6 +106,10 @@ package com.allurent.sizing.model
             return project;
         }
         
+        /**
+         * Get the File for a source filename by searching in the set of source paths
+         * for this ProjectModel. 
+         */
         public function findSourceFile(filename:String):File
         {
             for each (var path:File in sourcePath)
@@ -108,6 +123,11 @@ package com.allurent.sizing.model
             return null;
         }
         
+        /**
+         * Obtain a filename for some source file corresponding to a Class.  Look for both
+         * MXML and AS definitions.  Returns null if no file could be found.
+         *  
+         */
         public function findClass(c:ClassModel):File
         {
             var name:String = c.className.replace(/\./g, File.separator);

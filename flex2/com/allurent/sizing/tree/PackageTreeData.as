@@ -28,6 +28,10 @@ package com.allurent.sizing.tree
     import mx.collections.Sort;
     import mx.collections.SortField;
 
+    /**
+     * This class acts as a helper to create data providers from the model that can be handed
+     * to a Tree or List. 
+     */
     public class PackageTreeData
     {
         private var nonEmptyFilter:Function;
@@ -46,6 +50,10 @@ package com.allurent.sizing.tree
             nonEmptyFilter = function(f:FileSegmentModel):Boolean { return f.size > 0; };
         }
 
+        /**
+         * Given a PackageModel, return a data provider for that model and all of its
+         * subpackages and descendant classes. 
+         */
         public function getPackageMapTree(packageModel:PackageModel):ArrayCollection
         {
             var children:ArrayCollection = new ModelCollection(packageModel.codeModel);
@@ -60,11 +68,16 @@ package com.allurent.sizing.tree
             children.refresh();
 
             var classChildren:ArrayCollection = children;
+            var classChildrenNode:ModelNode = null;
             if (classChildren.length > 0)
             {
+                // If there are multiple subpackages, create a special child collection
+                // for the classes that are actually hanging right off this package.
                 classChildren = new ModelCollection(packageModel.codeModel);
+                classChildrenNode = new ModelNode(packageModel, ModelNode.PACKAGE_CLASSES_TYPE ,classChildren);
             }
             
+            // add all the classes in this package
             for each (var clsModel:ClassModel in packageModel.classMap)
             {
                 if (nonEmptyFilter(clsModel))
@@ -73,9 +86,10 @@ package com.allurent.sizing.tree
                 }
             }
 
-            if (classChildren != children && classChildren.length > 0)
+            // add a special <classes> node if necessary
+            if (classChildrenNode != null)
             {
-                children.addItem(new ModelNode(packageModel, ModelNode.PACKAGE_CLASSES_TYPE ,classChildren));
+                children.addItem(classChildrenNode);
                 classChildren.sort = typeSizeSort;
                 classChildren.refresh();
             }
@@ -83,6 +97,9 @@ package com.allurent.sizing.tree
             return children;
         }
 
+       /**
+        * Get a list-structured data provider for some set of packages. 
+        */
        public function getPackageMapList(packages:Array):ArrayCollection
        {
             if (packages.length == 0)
@@ -104,6 +121,9 @@ package com.allurent.sizing.tree
             return children;
         }
         
+       /**
+        * Get a list-structured data provider for some set of classes. 
+        */
        public function getClassList(classes:Array, filter:Function = null):ArrayCollection
        {
             if (classes.length == 0)

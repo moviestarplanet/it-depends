@@ -32,6 +32,9 @@ package com.allurent.sizing.tree
 
     [RemoteClass(alias="com.allurent.sizing.tree.ModelNode")]
     
+    /**
+     * Object used as a single node in a Tree or List view. 
+     */
     [Bindable]
     public class ModelNode
     {

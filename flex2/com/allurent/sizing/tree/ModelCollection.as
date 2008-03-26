@@ -29,6 +29,10 @@ package com.allurent.sizing.tree
 
     [RemoteClass(alias="com.allurent.sizing.tree.ModelCollection")]
     
+    /**
+     * Collection of model objects shown in a tree or list view; monitors REMOVE events
+     * to keep itself updated (in a very expensive, hacked way).
+     */
     public class ModelCollection extends ArrayCollection
     {
         public function ModelCollection(codeModel:CodeModel)
@@ -40,6 +44,7 @@ package com.allurent.sizing.tree
         {
             for (var i:int = 0; i < length; i++)
             {
+                // TODO: use lookup table
                 if (getItemAt(i).data == e.model)
                 {
                     removeItemAt(i);
@@ -48,6 +53,5 @@ package com.allurent.sizing.tree
                 }
             }
         }
-        
     }
 }
