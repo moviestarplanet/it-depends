@@ -21,6 +21,7 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  -->
+ 
 <mx:Window xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical"
     width="800" height="600"
     preinitialize="onInitialize()"
@@ -48,7 +49,10 @@
             import com.allurent.sizing.tree.PackageTreeData;
             import com.allurent.sizing.Controller;
 
+            // The code model of which this is a view
             private var _codeModel:CodeModel;
+            
+            // some nice formatters
             private var percentFormatter:NumberFormatter;
             private var sizeFormatter:NumberFormatter;
 
@@ -86,6 +90,7 @@
                 }
             }
             
+            // Remove a selected item from some list
             private function removeSelection(list:List):void
             {
                 var item:Object = list.selectedItem;
@@ -107,6 +112,10 @@
                 }
             }
             
+            /**
+             *  Clean up the linkage model to remove all classes that are not
+             *  reachable by a dependency graph rooted in the main class.
+             */ 
             private function cleanUpCodeModel(codeModel:CodeModel):void
             {
                 if (controller.project.mainClassName != null)
@@ -116,6 +125,7 @@
                 }
             }
             
+            // Set the main class from the selected item in a list
             private function setMainClass(list:List):void
             {
                 if (list.selectedItem == null)
@@ -130,12 +140,14 @@
                 }
             }
             
+            // Create a brand-new main tree view from the code model
             private function updatePackageTree():void
             {
                 var packageTreeData:PackageTreeData = new PackageTreeData();
                 packageTree.dataProvider = packageTreeData.getPackageMapTree(codeModel.rootPackage);
             }
 
+            // update the right-hand tabs from the currently selected package or list
             private function updateReferences():void
             {
                 var item:Object = packageTree.selectedItem;
@@ -147,13 +159,20 @@
                 if (item.data is FileSegmentModel)
                 {
                     var packageTreeData:PackageTreeData = new PackageTreeData();
+                    
+                    // Create a temporary CodeModel from the closure of references from the selected item
                     var referenceModel:CodeModel = new CodeModel(controller.project);
                     referenceModel.addClasses(item.data.referenceClosure);
                     referenceModel.totalCodeSize = codeModel.totalCodeSize;
+                    
+                    // Create a tree data provider from that reference closure
                     referenceTree.dataProvider = packageTreeData.getPackageMapTree(referenceModel.rootPackage);
 
                     if (item.data is PackageModel)
                     {
+                        // If we're showing a package, references/referrers are filtered to exclude
+                        // intra-package references.
+                        //
                         var p:PackageModel = item.data as PackageModel;
                         var packageExclusion:Function = function(c:ClassModel):Boolean {
                             var p2:PackageModel = referenceModel.getPackageModel(p.packageName);
@@ -179,6 +198,12 @@
 
             private function handleDragDrop(e:DragEvent):void
             {
+                // On a drag drop, do the following things:
+                // - add the dragged model into the destination code model,
+                // - remove the dragged model from teh source code model (which cleans up
+                //   orphaned dependencies)
+                // - resolve all dangling dependencies in the destination code model
+                //
                 var sourceList:List = List(e.dragInitiator);
                 var item:Object = sourceList.selectedItem.data;
                 if (item is ClassModel)

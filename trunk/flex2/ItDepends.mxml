@@ -25,6 +25,8 @@
     width="200" height="200"
     xmlns:view="com.allurent.sizing.view.*">
     
+    <!-- Main ItDepends MXML Application View -->
+    
     <mx:Style>
         Panel {
             border-alpha: 1;
@@ -74,6 +76,21 @@
                 launchMainModuleView(controller, file.name);
             }
             
+            private function loadSwfxDump():void
+            {
+                var file:File = new File();
+                file.addEventListener(Event.SELECT, swfxDumpSelected);
+                file.browseForOpen("Open SWFX Dump with Offsets");
+            }
+            
+            private function swfxDumpSelected(e:Event):void
+            {
+                var controller:Controller = new Controller();
+                var file:File = e.target as File;
+                controller.loadSwfx(file);
+                launchMainModuleView(controller, file.name);
+            }
+            
             private function launchMainModuleView(controller:Controller, title:String):void
             {
                 var allClassesView:ModuleView = new ModuleView();
@@ -86,6 +103,7 @@
     </mx:Script>
     
     <mx:Button label="Load Link Report..." click="loadLinkReport()"/>
+    <mx:Button label="Load Swfx Dump..." click="loadSwfxDump()"/>
     <mx:Button label="Load Project..." click="loadProject()"/>
 
 </mx:WindowedApplication>

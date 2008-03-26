@@ -24,25 +24,42 @@ package com.allurent.sizing.model
 {
     import mx.collections.ArrayCollection;
     
+    /**
+     * Model of a Class in the application. 
+     */
     public class ClassModel extends FileSegmentModel
     {
+        /** Fully qualified name of this class. */
         public var className:String;
 
+        /** Containing package of this class */
         public var packageModel:PackageModel;
+        
+        /** name -> ClassModel map for all outgoing dependencies. */
         public var referenceMap:Object = {};
+        
+        /** name -> ClassModel map for all incoming dependencies. */
         public var referrerMap:Object = {};
         
+        /** Bookkeeping mark for graph traversal. */
         public var mark:Boolean = false;
         
+        /**
+         * Create a new ClassModel. 
+         * @param codeModel the owning CodeModel object
+         * @param className the name of this class
+         */
         public function ClassModel(codeModel:CodeModel, className:String)
         {
             super(codeModel);
             
             this.className = className;
 
+            // Ensure a reference to the containing package
             var index:int = className.lastIndexOf(".");
             if (index > 0)
             {
+                // Note: this creates the PackageModel if it doesn't exist.
                 packageModel = codeModel.getPackageModel(className.substring(0, index));
                 unqualifiedName = className.substring(index+1);
             }
@@ -53,6 +70,9 @@ package com.allurent.sizing.model
             }
         }
 
+        /**
+         * Get the number of classes on which this class depends. 
+         */
         public function get referenceCount():int
         {
             var n:int = 0;
@@ -63,6 +83,9 @@ package com.allurent.sizing.model
             return n;
         }
         
+        /**
+         * The number of classes that depend on this Class. 
+         */
         public function get referrerCount():int
         {
             var n:int = 0;
@@ -73,25 +96,38 @@ package com.allurent.sizing.model
             return n;
         }
         
-        public function addPrerequisite(classModel:ClassModel):void
-        {
-            // prerequisites and dependencies treated both as ext. references
-            referenceMap[classModel.className] = classModel;
-            classModel.referrerMap[className] = this;
-        }
-        
+        /**
+         * Records an outgoing dependency in the linkage model, symmetrically
+         * accounted for on both ends of the relationship.
+         */
         public function addDependency(classModel:ClassModel):void
         {
             referenceMap[classModel.className] = classModel;
             classModel.referrerMap[className] = this;
         }
         
+        /**
+         * Records a prerequisite in the linkage model, equivalent to an
+         * outgoing dependency. 
+         */
+        public function addPrerequisite(classModel:ClassModel):void
+        {
+            referenceMap[classModel.className] = classModel;
+            classModel.referrerMap[className] = this;
+        }
+        
+        /**
+         * Removes an outgoing dependency, managing both ends of the relationship.
+         */
         public function removeDependency(classModel:ClassModel):void
         {
             delete referenceMap[classModel.className]
             delete classModel.referrerMap[className];
         }
         
+        /**
+         * @return An array of all outgoing dependencies. 
+         */
         public function get references():Array
         {
             var result:Array = [];
@@ -102,6 +138,9 @@ package com.allurent.sizing.model
             return result;
         }
 
+        /**
+         * @return an array of all incoming dependencies. 
+         */
         public function get referrers():Array
         {
             var result:Array = [];
@@ -112,6 +151,10 @@ package com.allurent.sizing.model
             return result;
         }
 
+        /**
+         * Obtain the transitive closure of all outgoing dependencies
+         * starting from this Class.
+         */
         public function get referenceClosure():Array
         {
             var closureMap:Object = referenceClosureMap;
@@ -123,6 +166,10 @@ package com.allurent.sizing.model
             return result;
         }
         
+        /**
+         * Obtain a map whose class name -> ClassModel entries represent
+         * the transitive closure of all outgoing dependencies from this Class. 
+         */
         public function get referenceClosureMap():Object
         {
             var resultSet:Object = {};
@@ -130,18 +177,12 @@ package com.allurent.sizing.model
             return resultSet;
         }
         
-        private function addReferenceClosure(resultSet:Object):void
-        {
-            for each (var reference:ClassModel in referenceMap)
-            {
-                if (!(reference.className in resultSet))
-                {
-                    resultSet[reference.className] = reference;
-                    reference.addReferenceClosure(resultSet);
-                }
-            }
-        }
-
+        /**
+         * Figure out if this ClassModel has some PackageModel as an ancestor. 
+         * @param p a PackageModel
+         * @return true if this class belongs to the given package or one of its subpackages.
+         * 
+         */
         public function inPackage(p:PackageModel):Boolean
         {
             var p2:PackageModel = this.packageModel;
@@ -156,9 +197,32 @@ package com.allurent.sizing.model
             return false;
         }
         
+        /**
+         * The total code size of the application to which this class belongs.  
+         */
         override public function get totalSize():int
         {
             return codeModel.project.codeModel.totalCodeSize;
         }
-   }
+
+        /**
+         * Build a map from class names -> ClassModels whose entries represent
+         * the transitive closure of outgoing references from this class. 
+         * 
+         * @param resultSet an Object used as a map to which these entries should be added.
+         * 
+         */        
+        private function addReferenceClosure(resultSet:Object):void
+        {
+            for each (var reference:ClassModel in referenceMap)
+            {
+                if (!(reference.className in resultSet))
+                {
+                    resultSet[reference.className] = reference;
+                    reference.addReferenceClosure(resultSet);
+                }
+            }
+        }
+
+  }
 }

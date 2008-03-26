@@ -23,10 +23,14 @@
 package com.allurent.sizing.parse
 {
     import com.allurent.sizing.model.CodeModel;
-    import flash.filesystem.File;
-    import flash.filesystem.FileStream;
-    import flash.filesystem.FileMode;
     
+    import flash.filesystem.File;
+    import flash.filesystem.FileMode;
+    import flash.filesystem.FileStream;
+    
+    /**
+     * Abstract XML parser class to handle both link reports and SWFX output. 
+     */
     public class Parser
     {
         protected var codeModel:CodeModel;
@@ -40,15 +44,39 @@ package com.allurent.sizing.parse
         {
         }
 
+        public function parseContents(fileContents:String):void
+        {
+            parseXML(new XML(fileContents));
+        }
+
         public function parseFile(file:File):void
         {
             var input:FileStream = new FileStream();
             input.open(file, FileMode.READ);
             var fileContents:String = input.readUTFBytes(input.bytesAvailable);
             XML.ignoreComments = false;
-            parseXML(new XML(fileContents));
+            parseContents(fileContents);
             XML.ignoreComments = true;
             input.close();
         }
-    }
+        
+        /**
+         * Turn a class name as it occurs in the LinkReport into something
+         * that we can work with, with nice dots 'n' everything.  Also strip off
+         * the initial _ from watcher setup classes for clarity of analysis.
+         */
+        public static function fixClassName(className:String):String
+        {
+            className = className.replace(/:/g, ".");
+            if (className.match(/^_.+WatcherSetupUtil$/))
+            {
+                className = className.substring(1).replace(/_/g, ".");
+            }
+            if (className.charAt(0) == ".")
+            {
+                className = className.substring(1);
+            }
+            return className;
+        }
+   }
 }

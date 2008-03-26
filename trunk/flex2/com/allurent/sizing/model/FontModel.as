@@ -24,6 +24,11 @@ package com.allurent.sizing.model
 {
     import mx.collections.ArrayCollection;
     
+    /**
+     * Model of a font's size within a SWF. 
+     * @author joeb
+     * 
+     */
     public class FontModel extends FileSegmentModel
     {
         public var fontName:String;

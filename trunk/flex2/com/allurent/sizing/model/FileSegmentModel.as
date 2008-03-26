@@ -24,11 +24,25 @@ package com.allurent.sizing.model
 {
     import mx.collections.ArrayCollection;
     
+    /**
+     * Model object representing some segment or cross section of a SWF-based application. 
+     * @author joeb
+     * 
+     */
     public class FileSegmentModel
     {
+        /** Size in bytes. */
         public var size:int = 0;
+        
+        /** True if this model has been deleted from the owning code model; provides book-keeping during
+         *  dependency graph traversal.
+         */
         public var deleted:Boolean = false;
+        
+        /** The owning CodeModel for this object. */
         public var codeModel:CodeModel;
+        
+        /** An unqualified name that can be used for general display purposes. */
         public var unqualifiedName:String;
         
         public function FileSegmentModel(codeModel:CodeModel)
@@ -36,6 +50,11 @@ package com.allurent.sizing.model
             this.codeModel = codeModel;
         }
 
+        /**
+         * The total size of all occurences of this type of segment within the SWF.
+         * e.g. for fonts, the total size of all fonts.  For classes/packages, the total
+         * code size.  
+         */
         public function get totalSize():int
         {
             return 0;

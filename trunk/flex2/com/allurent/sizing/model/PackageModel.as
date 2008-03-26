@@ -24,14 +24,27 @@ package com.allurent.sizing.model
 {
     import mx.collections.ArrayCollection;
     
+    /**
+     * Model of a package, its parent packages and its child packages/classes within a CodeModel.
+     */
     public class PackageModel extends FileSegmentModel
     {
+        /** Fully qualified name of this package. */
         public var packageName:String;
+        
+        /** Containing parent package of this package, if it is not the root package. */
         public var containingPackageModel:PackageModel;
-        public var classMap:Object = {};   
+        
+        /** Map from class names to ClassModels for classes directly contained in this package. */
+        public var classMap:Object = {};
+        
+        /** Map from package names to PackageModels for classes directly contained in this package. */
         public var packageMap:Object = {};
+        
+        /** Total size of all classes in this package and its subpackages. */
         public var classCodeSize:int = 0;
         
+        /** Create a new PackageModel. */
         public function PackageModel(codeModel:CodeModel, packageName:String)
         {
             super(codeModel);
@@ -51,6 +64,9 @@ package com.allurent.sizing.model
             }
         }
         
+        /**
+         * Get the child count of this package model, including both classes and packages. 
+         */
         public function get childCount():uint
         {
             var n:uint = 0;
@@ -61,26 +77,42 @@ package com.allurent.sizing.model
             return n;
         }
         
+        /**
+         * Add a class to this package. 
+         */
         public function addClassModel(model:ClassModel):void
         {
             classMap[model.className] = model;
         }
         
+        /**
+         * Remove a class from this package. 
+         */
         public function removeClassModel(model:ClassModel):void
         {
             delete classMap[model.className];
         }
         
+        /**
+         * Add a subpackage to this package. 
+         */
         public function addPackageModel(model:PackageModel):void
         {
             packageMap[model.packageName] = model;
         }
  
+        /**
+         * Remove a subpackage from this package. 
+         */
         public function removePackageModel(model:PackageModel):void
         {
             delete packageMap[model.packageName];
         }
         
+        /**
+         * Get the transitive closure of all classes  referred to by any classes at in this
+         * package or any of its subpackages. 
+         */
         public function get referenceClosure():Array
         {
             var resultSet:Object = {};
@@ -114,6 +146,9 @@ package com.allurent.sizing.model
             return result;
         }
  
+        /**
+         * Get all immediate references coming out of this package or any of its subpackages. 
+         */
         public function get references():Array
         {
             var resultSet:Object = {};
@@ -145,6 +180,9 @@ package com.allurent.sizing.model
             return result;
         }
  
+        /**
+         * Get all incoming dependencies on this package or any of its subpackages. 
+         */
         public function get referrers():Array
         {
             var resultSet:Object = {};
