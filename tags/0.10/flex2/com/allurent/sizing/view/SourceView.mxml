@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+ * Copyright (c) 2008 Allurent, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify,
+ * merge, publish, distribute, sublicense, and/or sell copies of the
+ * Software, and to permit persons to whom the Software is furnished
+ * to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+ * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ -->
+<mx:Window xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical"
+    creationComplete="onCreationComplete()">
+
+    <mx:Script>
+        <![CDATA[
+        import com.allurent.sizing.model.ClassModel;
+        import mx.managers.PopUpManager;
+        import mx.core.Application;
+        import flash.filesystem.FileMode;
+        import flash.filesystem.FileStream;
+        import flash.filesystem.File;
+
+        private var classModel:ClassModel;
+        
+        public static function show(c:ClassModel):void
+        {
+            var window:SourceView = new SourceView();
+            window.width = 800; window.height = 800;
+            window.open();
+            window.navigate(c);
+        }
+        
+        public function navigate(c:ClassModel):void
+        {
+            classModel = c;
+            title = c.className;
+            
+            var f:File = c.codeModel.project.findClass(c);
+
+            var fileContents:String;
+            if (f != null)
+            {
+                var input:FileStream = new FileStream();
+                input.open(f, FileMode.READ);
+                fileContents = input.readUTFBytes(input.bytesAvailable);
+                input.close();
+            }
+            else
+            {
+                fileContents = "(file not found)";
+            }
+            
+            var html:XML =
+                <html>
+                    <head>
+                       <script>
+                           var navigate;
+                       </script>
+                    </head>
+                    <body/>
+                </html>;
+            
+            html.body.appendChild(<h1>{c.className}</h1>);
+            html.body.appendChild(<p>Code Size: {c.size}</p>);
+
+            var effList:XML = <p>Refers to:<ul/></p>
+            var effReplacements:Object = {};
+            for each (var reference:ClassModel in c.references)
+            {
+                linkReference(reference, effList, effReplacements);
+            }
+            html.body.appendChild(effList);
+
+            var rfrList:XML = <p>Referred to by:<ul/></p>
+            for each (var referrer:ClassModel in c.referrers)
+            {
+                linkReference(referrer, rfrList, effReplacements);
+            }
+            html.body.appendChild(rfrList);
+
+            html.body.appendChild(<pre>{fileContents}</pre>);
+
+            var pageText:String = html.toXMLString();
+            for (var effName:String in effReplacements)
+            {
+                pageText = pageText.replace(new RegExp("(\\W)" + effName + "(\\W)", "g"), "$1"+effReplacements[effName] + effName + "</a>$2");
+            }
+            htmlDisplay.htmlText = pageText;
+            htmlDisplay.htmlLoader.addEventListener(Event.COMPLETE, handleDomInitialize);
+        }
+
+        private function onCreationComplete():void
+        {
+        }
+        
+        private function handleDomInitialize(e:Event):void
+        {
+            htmlDisplay.htmlLoader.window.navigate = navigateToClassName;
+        }
+
+        private function linkReference(c:ClassModel, effList:XML, effReplacements:Object):void
+        {
+            if (filterClass(c))
+            {
+                effList.ul.appendChild(<li>{c.className}</li>);
+                effReplacements[c.unqualifiedName] =
+                    "<a href='#' onClick='navigate(\"" + c.className + "\")'>";
+            }
+        }
+
+        private function filterClass(c:ClassModel):Boolean
+        {
+            if (c.className.indexOf("flash.") == 0)
+                return false;
+                
+            if (c.className.indexOf("_") >= 0)
+                return false;
+                
+            switch(c.className)
+            {
+                case "Function":
+                case "Array":
+                case "Object":
+                case "Math":
+                case "String":
+                case "Number":
+                    return false;
+            }
+
+            return true;    
+        }
+
+        private function navigateToClassName(className:String):Boolean
+        {
+            navigate(classModel.codeModel.getClassModel(className));
+            return true;
+        }
+        ]]>
+    </mx:Script>
+    
+    <mx:HTML id="htmlDisplay" width="100%" height="100%"/>
+</mx:Window>
