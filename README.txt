@@ -1,4 +1,10 @@
-SizeAnalyzer
+DOCUMENTATION:
+
+http://code.google.com/p/it-depends/wiki/UsingItDepends
+
+BUILD:
+
+Use FlexBuilder 3 for now.  An Ant file will be made available shortly.
 
 
 LICENSE:
