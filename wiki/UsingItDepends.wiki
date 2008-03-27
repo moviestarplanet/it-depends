@@ -2,11 +2,17 @@
 
 ==A Humble Disclaimer==
 
-This project arose out of a hacked-up tool that was created out of sheer necessity as we were trying to make our applications smaller at Allurent.  Therefore, the user interface doesn't reflect my idea of good usability or good design, and I offer my apologies and sympathy to you, the user.
+This project arose out of a hacked-up tool that was created out of sheer necessity as we were trying to make our applications smaller at Allurent.  Therefore, the user interface doesn't reflect my idea of good usability or good design, and I offer my apologies for its many shortcomings.
 
-==Projects==
+==Installation==
 
-A _project_ is a collection of input files, search paths and settings used by ItDepends to analyze an application's linkage model.  Elements of a project include:
+If you don't already have the Adobe AIR runtime installed, install it first from http://get.adobe.com/air/.
+
+Then double click the ItDepends.air file you downloaded from this site and run the installer.
+
+==Linkage Projects==
+
+A _linkage project_ is a collection of input files, search paths and settings used by ItDepends to analyze an application's linkage model.  Elements of a project include:
   * An XML link report produced by the mxmlc compiler for an application
   * A list of directories to search for source code files in the application
   * The main class name for the application
@@ -21,6 +27,10 @@ To create a new project, follow these steps:
 2. In the resulting window, browse your way to the main class of your application and select it, then click the *Set Main Class* button.
 
 3. If you want to view source code, click the *Source Path...* button to add a source directory to be browsed.  You can click this button multiple times to add multiple search paths (yes, this is a lousy user interface!).
+
+==Saving a Project==
+
+To save the above settings in a single file that can be reloaded easily, click the *Save Project...* button from the Linkage Browser window.
 
 ==The Linkage Browser Window==
 
@@ -40,19 +50,23 @@ Let's go through the areas of the window one by one.
 
 Each class or package is followed by its percentage of the code size in the application, and the number of bytes in parentheses.  Classes are also shown with a number in square brackets that indicates how many other classes in the linkage model immediately refer to them.
 
+==Dependency Detail Tabs==
+
 When a class or package is selected in the left-hand Package Tree, the right hand panel shows three tabbed displays:
 
-	All References		all classes ultimately referred to by any dependency chain
-						originating within the selected object, organized by package.
-						
-	Immediate References	all classes directly referred to by the selected object
-	Referring Classes	all classes that directly refer to the selected object
+*All References* shows all the classes ultimately reached by a chain of dependencies originating with the selected class or package.  If you are thinking of moving the selected item out of the application either by removing it or moving it into a module, these are the classes that might be able to disappear along with it.  Some of them won't be able to disappear, of course, if other classes still depend on them.
 
-Double-clicking any class in any window brings up a window that can browse the source for that class with embedded dependency information shown as hyperlinks.
+*Immediate References* shows the classes on which the selected class or package directly depends: the _outgoing dependencies_.  This is a shorter list than All References.
 
-==Exploring Scenarios==
+*Referring Classes* is in many ways the most useful display: it shows a list of all classes which depend on the selected class or package, or the _incoming dependencies_.  If you find a class or package that is large or which has many other dependencies, and you'd like to evict it from your app or move it out into a module, this list tells you which other classes depend directly on it.
 
-(Documentation TBD)
+==Source Browser==
+
+Double-clicking a class name in any display brings up a separate _Source Browser_ window that shows all the incoming and outgoing dependencies as hyperlinks that cause the source browser display to show those classes instead.  If you have specified source paths, and the source AS or MXML file could be found, this window will show the source code and will highlight all class name references within the file as hyperlinks of the same kind.
+
+==Exploring Deletion Scenarios==
+
+Once you have highlighted
 
 ==Why the Code Size and Percentages are Inaccurate==
 
@@ -60,4 +74,4 @@ The numbers in link reports reflect the size of classes at an intermediate stage
   * optimization
   * ZLIB compression of the SWF
 
-Furthermore the proportional size isn't quite correct either because a SWF typically contains a bunch of additional stuff besides what the link report tells ItDepends, like embedded fonts, the Flex preloader, and other assorted non-code-related bytage.
+Furthermore the proportional size isn't quite correct either because a SWF typically contains a bunch of additional stuff besides what the link report tells ItDepends, like embedded fonts, the Flex preloader, and other assorted non-code-related information.
