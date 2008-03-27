@@ -50,6 +50,8 @@ Let's go through the areas of the window one by one.
 
 Each class or package is followed by its percentage of the code size in the application, and the number of bytes in parentheses.  Classes are also shown with a number in square brackets that indicates how many other classes in the linkage model immediately refer to them.
 
+All classes/packages are sorted at each level of the package hierarchy by code size, with the largest shown first.
+
 ===Dependency Detail Tabs===
 
 When a class or package is selected in the left-hand Package Tree, the right hand panel shows three tabbed displays:
